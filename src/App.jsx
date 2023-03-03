@@ -1,43 +1,36 @@
-import { useContext, useState } from 'react'
-import { LoginForm } from "./components/LoginForm";
+import { useContext, useEffect, useState } from 'react'
+import { Forms } from "./components/Forms";
 import './App.css'
-import { GlobalContext } from './components/GlobalContext';
 import { RegisterForm } from './components/RegisterForm';
 import { Main } from "./components/Main";
+import { GlobalContext } from './components/GlobalContext';
 
 function App() {
+  //Get the global context
+  let context = useContext(GlobalContext)
+  //set the user in global context
+  const get_user_authenticated = async () => {
+    //verify if access token exists
+    if (localStorage.getItem('access')) {
 
-  const context = useContext(GlobalContext)
+      const response = await context.get_user()
+      //try to refresh the access token if it is invalid.
+      if (!response) {
 
-  fetch("http://127.0.0.1:8000/home/")
-
-  if (context.view == "login") {
-    
-    return (
-      <div>
-          <LoginForm />
-      </div>
-    )
-  }
-  
-  if (context.view == "main") {
-    return (
-      <div className='m-3 p-2'>
-        <div className='m-auto'>
-          <Main/>
-        </div>
-      </div>
-    )
+        const responseToken = await context.refreshToken()
+        //set user with the refreshed token or nothing
+        if (responseToken) {
+          await context.get_user()
+        }
+      }
+    }
   }
 
-  if (context.view == "register") {
-    return (
-      <div>
-        <RegisterForm/>
-      </div>
+  useEffect(() => { get_user_authenticated() }, [])
 
-    )
-  }
+  if (context.user) return <Main />
+
+  return <Forms/>
 
 }
 

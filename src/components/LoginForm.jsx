@@ -4,11 +4,10 @@ import { useState, useContext } from "react";
 import { GlobalContext } from "./GlobalContext";
 
 
-export function LoginForm() {
+export function LoginForm({setLoginForm}) {
 
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
-
     const context = useContext(GlobalContext)
 
     const login = async (event) => {
@@ -28,11 +27,18 @@ export function LoginForm() {
             ),
         }
 
-        const response = await fetch("http://127.0.0.1:8000/login/", options)
+        const response = await fetch("http://127.0.0.1:8000/token/", options)
         if (response.status === 200) {
-            const user = await response.json()
+            const auth = await response.json()
+            localStorage.setItem('access',auth.access)
+            localStorage.setItem('refresh',auth.refresh)
+            const userResponse = await fetch('http://127.0.0.1:8000/my/',{
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('access')}`,
+                },
+            })
+            const user = await userResponse.json()
             context.setUser(user)
-            context.setView("main")
         } else {
             setUsername("")
             setPassword("")
@@ -51,7 +57,7 @@ export function LoginForm() {
             <Button variant="primary" type="submit">Log In</Button>
             </div>
             <div>
-                <a href="#" className="fw-bold text-decoration-none text-success mb-3" onClick={()=>context.setView("register")}>Create an account</a>
+                <a href="#" className="fw-bold text-decoration-none text-success mb-3" onClick={()=>setLoginForm(false)}>Create an account</a>
             </div>
         </Form>
     )
