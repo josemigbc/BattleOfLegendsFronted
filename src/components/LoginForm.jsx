@@ -2,43 +2,32 @@ import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
 import { useState, useContext } from "react";
 import { GlobalContext } from "./GlobalContext";
+import axios from "axios";
+import settings from "./../settings.json";
+import { Link } from "react-router-dom";
 
-
-export function LoginForm({setLoginForm}) {
+export function LoginForm({ setLoginForm }) {
 
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const context = useContext(GlobalContext)
 
+    axios.defaults.xsrfCookieName = "csrftoken"
+    axios.defaults.xsrfHeaderName = "X-CSRFTOKEN"
+    axios.defaults.withCredentials = true
+
     const login = async (event) => {
 
         event.preventDefault();
 
-        const options = {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(
-                { 
-                    username: username,
-                    password: password,
-                }
-            ),
+        const data = {
+            username: username,
+            password: password,
         }
 
-        const response = await fetch("http://127.0.0.1:8000/token/", options)
+        const response = await axios.post(`${settings.host}login/`, data)
         if (response.status === 200) {
-            const auth = await response.json()
-            localStorage.setItem('access',auth.access)
-            localStorage.setItem('refresh',auth.refresh)
-            const userResponse = await fetch('http://127.0.0.1:8000/my/',{
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('access')}`,
-                },
-            })
-            const user = await userResponse.json()
-            context.setUser(user)
+            context.setUser(response.data)
         } else {
             setUsername("")
             setPassword("")
@@ -46,7 +35,7 @@ export function LoginForm({setLoginForm}) {
     }
 
     return (
-        <Form method="post" onSubmit={e=>login(e)}>
+        <Form method="post" onSubmit={e => login(e)}>
             <Form.Group control-id="username" className="mb-3">
                 <Form.Control type="text" name="username" size="lg" className="border border-3" placeholder="Username" value={username} onChange={e => setUsername(e.target.value)} />
             </Form.Group>
@@ -54,10 +43,10 @@ export function LoginForm({setLoginForm}) {
                 <Form.Control type="password" name="password" size="lg" className="border border-3" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} />
             </Form.Group>
             <div className="mb-3">
-            <Button variant="primary" type="submit">Log In</Button>
+                <Button variant="primary" type="submit">Log In</Button>
             </div>
             <div>
-                <a href="#" className="fw-bold text-decoration-none text-success mb-3" onClick={()=>setLoginForm(false)}>Create an account</a>
+                <Link to={`register/`} className="fw-bold text-decoration-none text-success mb-3 text-white">Create an account</Link>
             </div>
         </Form>
     )

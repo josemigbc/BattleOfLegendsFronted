@@ -2,6 +2,9 @@ import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
 import { useState, useContext } from "react";
 import { GlobalContext } from "./GlobalContext";
+import axios from "axios";
+import settings from "./../settings.json";
+import { Link } from "react-router-dom";
 
 const validate_password = (password) => {
     if (password.length < 8) return false
@@ -24,23 +27,22 @@ export function RegisterForm({ setLoginForm }) {
     let [password2, setPassword2] = useState("");
     let [isValid, setIsValid] = useState(false);
 
-    const register = async () => {
+    axios.defaults.xsrfCookieName = "csrftoken"
+    axios.defaults.xsrfHeaderName = "X-CSRFTOKEN"
+    axios.defaults.withCredentials = true
+
+    const register = async (event) => {
         
         if (event,isValid) {
             event.preventDefault()
-            const response = await fetch('http://127.0.0.1:8000/register/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(
-                    {
-                        username: username,
-                        email: email,
-                        password: password1,
-                    }
-                ),
-            });
+            const data = {
+                username: username,
+                email: email,
+                password: password1,
+                refferal_of: 1,
+            }
+            const response = await axios.post(`${settings.host}register/`,data)
+        
             if (response.status === 201){
                 setLoginForm(true)
             } else {
@@ -83,7 +85,7 @@ export function RegisterForm({ setLoginForm }) {
             </div>
 
             <div>
-                <a href="" className="fw-bold text-decoration-none text-success mb-3" onClick={() => setLoginForm(true)}>Log In</a>
+                <Link to={`/`} className="fw-bold text-decoration-none text-success mb-3 text-white">Log In</Link>
             </div>
 
         </Form>

@@ -1,36 +1,36 @@
 import { useContext, useEffect, useState } from 'react'
-import { Forms } from "./components/Forms";
 import './App.css'
-import { RegisterForm } from './components/RegisterForm';
+import { LoginForm } from './components/LoginForm';
 import { Main } from "./components/Main";
 import { GlobalContext } from './components/GlobalContext';
+import axios from "axios";
+import settings from "./settings.json"
+import { Outlet, parsePath } from 'react-router';
 
 function App() {
   //Get the global context
   let context = useContext(GlobalContext)
+
+  axios.defaults.xsrfCookieName = "csrftoken"
+  axios.defaults.xsrfHeaderName = "X-CSRFTOKEN"
+  axios.defaults.withCredentials = true
+
   //set the user in global context
   const get_user_authenticated = async () => {
-    //verify if access token exists
-    if (localStorage.getItem('access')) {
 
-      const response = await context.get_user()
-      //try to refresh the access token if it is invalid.
-      if (!response) {
-
-        const responseToken = await context.refreshToken()
-        //set user with the refreshed token or nothing
-        if (responseToken) {
-          await context.get_user()
-        }
-      }
+    const response = await axios.get(`${settings.host}is-authenticated/`)
+    if (response.status === 200){
+      context.setUser(response.data)
     }
   }
 
   useEffect(() => { get_user_authenticated() }, [])
 
-  if (context.user) return <Main />
+  
 
-  return <Forms/>
+  if (context.user) return <Main/>
+
+  return <LoginForm/>
 
 }
 

@@ -1,18 +1,24 @@
 import { useContext, useEffect, useState } from "react";
 import { GlobalContext } from "./GlobalContext";
+import settings from "./../settings.json"
+import axios from "axios";
 
 export function Main() {
 
     const context = useContext(GlobalContext)
 
+    axios.defaults.xsrfCookieName = "csrftoken"
+    axios.defaults.xsrfHeaderName = "X-CSRFTOKEN"
+    axios.defaults.withCredentials = true
+
     const get_data = async () => {
-        const response = await fetch("http://127.0.0.1:8000/balance/", {
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('access')}`,
-            }
-        })
-        const data = await response.json()
-        context.setBalance(data)
+        const response = await axios.get(`${settings.host}balance/`)
+        context.setBalance(response.data)
+    }
+    
+    const logout = async () => {
+        await axios.get(`${settings.host}logout/`)
+        context.reset()
     }
 
     useEffect(()=>{get_data()},[])
@@ -34,11 +40,7 @@ export function Main() {
                 </div>
             </div>
             <div>
-                <button onClick={()=>{
-                    localStorage.removeItem('access')
-                    localStorage.removeItem('refresh')
-                    context.setUser(null)
-                }}>Log Out</button>
+                <button onClick={logout}>Log Out</button>
             </div>
         </div>
     )
